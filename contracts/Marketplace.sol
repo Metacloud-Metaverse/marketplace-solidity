@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.10;
+pragma solidity ^0.7.3;
 
-import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 import "@openzeppelin/contracts/utils/Address.sol";
 
-import "./MarketplaceStorage.sol";
-import "../commons/Ownable.sol";
-import "../commons/Pausable.sol";
+import "contracts/MarketplaceStorage.sol";
+import "contracts/commons/Ownable.sol";
+import "contracts/commons/Pausable.sol";
 
 contract Marketplace is Ownable, Pausable, MarketplaceStorage {
-  using SafeMath for uint256;
   using Address for address;
 
   constructor (
@@ -198,10 +196,10 @@ contract Marketplace is Ownable, Pausable, MarketplaceStorage {
         acceptedToken.transferFrom(sender, owner(), saleShareAmount),
         'Transfering the cut to the Marketplace owner failed'
       );
-    }
+    
 
     // Transfer asset owner
-    nftRegistry.safeTransferFrom(
+      nftRegistry.safeTransferFrom(
       seller,
       sender,
       assetId
