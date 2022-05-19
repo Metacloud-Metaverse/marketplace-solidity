@@ -5,7 +5,7 @@ pragma solidity ^0.7.3;
 import "@openzeppelin/contracts/utils/Address.sol";
 
 import "contracts/MarketplaceStorage.sol";
-import "contracts/commons/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "contracts/commons/Pausable.sol";
 
 contract Marketplace is Ownable, Pausable, MarketplaceStorage {
