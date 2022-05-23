@@ -26,7 +26,7 @@
                                 "type": "uint256"
                             }
                         ],
-                        "stateMutability": "view",
+                        "stateMutability": "pure",
                         "type": "function"
                     }
                 ],
@@ -39,16 +39,16 @@
                     "bytecode": {
                         "generatedSources": [],
                         "linkReferences": {},
-                        "object": "6080604052348015600f57600080fd5b5060958061001e6000396000f3fe6080604052348015600f57600080fd5b506004361060325760003560e01c80633408e470146037578063f698da2514604f575b600080fd5b603d6055565b60408051918252519081900360200190f35b603d6059565b4690565b6000548156fea2646970667358221220bf49b43893c5a7462f66fa93ead0d9002a45c6798f733272a94c9974437039e564736f6c63430007030033",
-                        "opcodes": "PUSH1 0x80 PUSH1 0x40 MSTORE CALLVALUE DUP1 ISZERO PUSH1 0xF JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST POP PUSH1 0x95 DUP1 PUSH2 0x1E PUSH1 0x0 CODECOPY PUSH1 0x0 RETURN INVALID PUSH1 0x80 PUSH1 0x40 MSTORE CALLVALUE DUP1 ISZERO PUSH1 0xF JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST POP PUSH1 0x4 CALLDATASIZE LT PUSH1 0x32 JUMPI PUSH1 0x0 CALLDATALOAD PUSH1 0xE0 SHR DUP1 PUSH4 0x3408E470 EQ PUSH1 0x37 JUMPI DUP1 PUSH4 0xF698DA25 EQ PUSH1 0x4F JUMPI JUMPDEST PUSH1 0x0 DUP1 REVERT JUMPDEST PUSH1 0x3D PUSH1 0x55 JUMP JUMPDEST PUSH1 0x40 DUP1 MLOAD SWAP2 DUP3 MSTORE MLOAD SWAP1 DUP2 SWAP1 SUB PUSH1 0x20 ADD SWAP1 RETURN JUMPDEST PUSH1 0x3D PUSH1 0x59 JUMP JUMPDEST CHAINID SWAP1 JUMP JUMPDEST PUSH1 0x0 SLOAD DUP2 JUMP INVALID LOG2 PUSH5 0x6970667358 0x22 SLT KECCAK256 0xBF 0x49 0xB4 CODESIZE SWAP4 0xC5 0xA7 CHAINID 0x2F PUSH7 0xFA93EAD0D9002A GASLIMIT 0xC6 PUSH26 0x8F733272A94C9974437039E564736F6C63430007030033000000 ",
+                        "object": "6080604052348015600f57600080fd5b5060958061001e6000396000f3fe6080604052348015600f57600080fd5b506004361060325760003560e01c80633408e470146037578063f698da2514604f575b600080fd5b603d6055565b60408051918252519081900360200190f35b603d6059565b4690565b6000548156fea26469706673582212204edb794ef905f1f8c9a1c613ebde8bd1d4add0c09e027aafd6435692c34dbe0864736f6c63430007030033",
+                        "opcodes": "PUSH1 0x80 PUSH1 0x40 MSTORE CALLVALUE DUP1 ISZERO PUSH1 0xF JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST POP PUSH1 0x95 DUP1 PUSH2 0x1E PUSH1 0x0 CODECOPY PUSH1 0x0 RETURN INVALID PUSH1 0x80 PUSH1 0x40 MSTORE CALLVALUE DUP1 ISZERO PUSH1 0xF JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST POP PUSH1 0x4 CALLDATASIZE LT PUSH1 0x32 JUMPI PUSH1 0x0 CALLDATALOAD PUSH1 0xE0 SHR DUP1 PUSH4 0x3408E470 EQ PUSH1 0x37 JUMPI DUP1 PUSH4 0xF698DA25 EQ PUSH1 0x4F JUMPI JUMPDEST PUSH1 0x0 DUP1 REVERT JUMPDEST PUSH1 0x3D PUSH1 0x55 JUMP JUMPDEST PUSH1 0x40 DUP1 MLOAD SWAP2 DUP3 MSTORE MLOAD SWAP1 DUP2 SWAP1 SUB PUSH1 0x20 ADD SWAP1 RETURN JUMPDEST PUSH1 0x3D PUSH1 0x59 JUMP JUMPDEST CHAINID SWAP1 JUMP JUMPDEST PUSH1 0x0 SLOAD DUP2 JUMP INVALID LOG2 PUSH5 0x6970667358 0x22 SLT KECCAK256 0x4E 0xDB PUSH26 0x4EF905F1F8C9A1C613EBDE8BD1D4ADD0C09E027AAFD6435692C3 0x4D 0xBE ADDMOD PUSH5 0x736F6C6343 STOP SMOD SUB STOP CALLER ",
                         "sourceMap": "59:1745:0:-:0;;;;;;;;;;;;;;;;;;;"
                     },
                     "deployedBytecode": {
                         "generatedSources": [],
                         "immutableReferences": {},
                         "linkReferences": {},
-                        "object": "6080604052348015600f57600080fd5b506004361060325760003560e01c80633408e470146037578063f698da2514604f575b600080fd5b603d6055565b60408051918252519081900360200190f35b603d6059565b4690565b6000548156fea2646970667358221220bf49b43893c5a7462f66fa93ead0d9002a45c6798f733272a94c9974437039e564736f6c63430007030033",
-                        "opcodes": "PUSH1 0x80 PUSH1 0x40 MSTORE CALLVALUE DUP1 ISZERO PUSH1 0xF JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST POP PUSH1 0x4 CALLDATASIZE LT PUSH1 0x32 JUMPI PUSH1 0x0 CALLDATALOAD PUSH1 0xE0 SHR DUP1 PUSH4 0x3408E470 EQ PUSH1 0x37 JUMPI DUP1 PUSH4 0xF698DA25 EQ PUSH1 0x4F JUMPI JUMPDEST PUSH1 0x0 DUP1 REVERT JUMPDEST PUSH1 0x3D PUSH1 0x55 JUMP JUMPDEST PUSH1 0x40 DUP1 MLOAD SWAP2 DUP3 MSTORE MLOAD SWAP1 DUP2 SWAP1 SUB PUSH1 0x20 ADD SWAP1 RETURN JUMPDEST PUSH1 0x3D PUSH1 0x59 JUMP JUMPDEST CHAINID SWAP1 JUMP JUMPDEST PUSH1 0x0 SLOAD DUP2 JUMP INVALID LOG2 PUSH5 0x6970667358 0x22 SLT KECCAK256 0xBF 0x49 0xB4 CODESIZE SWAP4 0xC5 0xA7 CHAINID 0x2F PUSH7 0xFA93EAD0D9002A GASLIMIT 0xC6 PUSH26 0x8F733272A94C9974437039E564736F6C63430007030033000000 ",
+                        "object": "6080604052348015600f57600080fd5b506004361060325760003560e01c80633408e470146037578063f698da2514604f575b600080fd5b603d6055565b60408051918252519081900360200190f35b603d6059565b4690565b6000548156fea26469706673582212204edb794ef905f1f8c9a1c613ebde8bd1d4add0c09e027aafd6435692c34dbe0864736f6c63430007030033",
+                        "opcodes": "PUSH1 0x80 PUSH1 0x40 MSTORE CALLVALUE DUP1 ISZERO PUSH1 0xF JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST POP PUSH1 0x4 CALLDATASIZE LT PUSH1 0x32 JUMPI PUSH1 0x0 CALLDATALOAD PUSH1 0xE0 SHR DUP1 PUSH4 0x3408E470 EQ PUSH1 0x37 JUMPI DUP1 PUSH4 0xF698DA25 EQ PUSH1 0x4F JUMPI JUMPDEST PUSH1 0x0 DUP1 REVERT JUMPDEST PUSH1 0x3D PUSH1 0x55 JUMP JUMPDEST PUSH1 0x40 DUP1 MLOAD SWAP2 DUP3 MSTORE MLOAD SWAP1 DUP2 SWAP1 SUB PUSH1 0x20 ADD SWAP1 RETURN JUMPDEST PUSH1 0x3D PUSH1 0x59 JUMP JUMPDEST CHAINID SWAP1 JUMP JUMPDEST PUSH1 0x0 SLOAD DUP2 JUMP INVALID LOG2 PUSH5 0x6970667358 0x22 SLT KECCAK256 0x4E 0xDB PUSH26 0x4EF905F1F8C9A1C613EBDE8BD1D4ADD0C09E027AAFD6435692C3 0x4D 0xBE ADDMOD PUSH5 0x736F6C6343 STOP SMOD SUB STOP CALLER ",
                         "sourceMap": "59:1745:0:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1043:155;;;:::i;:::-;;;;;;;;;;;;;;;;412:30;;;:::i;1043:155::-;1154:9;1043:155;:::o;412:30::-;;;;:::o"
                     },
                     "gasEstimates": {
@@ -71,7 +71,7 @@
                         "getChainId()": "3408e470"
                     }
                 },
-                "metadata": "{\"compiler\":{\"version\":\"0.7.3+commit.9bfce1f6\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"domainSeparator\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getChainId\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"/Users/abrilzucchi/metacloud/marketplace-contract/contracts/commons/EIP712Base.sol\":\"EIP712Base\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/abrilzucchi/metacloud/marketplace-contract/contracts/commons/EIP712Base.sol\":{\"keccak256\":\"0x951b84d0106631e86ca54a8f3d46ed375d525cfe4f699dc31f4d0935b672938e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://ba2e00d45aea5d1658062b21ec1a2887bffa004f24ca783e1645a543ac54ef82\",\"dweb:/ipfs/QmU6fkL3ueC6SVBYwY9vLhWS43sF3P3KV8hyYXtZcZwrHi\"]}},\"version\":1}",
+                "metadata": "{\"compiler\":{\"version\":\"0.7.3+commit.9bfce1f6\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"domainSeparator\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getChainId\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"pure\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"/Users/abrilzucchi/metacloud/marketplace-contract/contracts/commons/EIP712Base.sol\":\"EIP712Base\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/abrilzucchi/metacloud/marketplace-contract/contracts/commons/EIP712Base.sol\":{\"keccak256\":\"0x0b6ff29fecdef75a4f8bc05bc8f1310bdcd521dc219c6ef942314c41b49e5a1d\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://eb7ed01daa063c81110c66ed9f8fa9d9fb99d9793ceaead8cb8997d35aeeaf6d\",\"dweb:/ipfs/QmSwBJU67fxfofY7LBGwiTU5F451qaFR4gb5nZRThwxyU2\"]}},\"version\":1}",
                 "storageLayout": {
                     "storage": [
                         {
@@ -99,21 +99,6 @@
             }
         }
     },
-    "errors": [
-        {
-            "component": "general",
-            "errorCode": "2018",
-            "formattedMessage": "/Users/abrilzucchi/metacloud/marketplace-contract/contracts/commons/EIP712Base.sol:41:5: Warning: Function state mutability can be restricted to pure\n    function getChainId() public view returns (uint256) {\n    ^ (Relevant source part starts here and spans across multiple lines).\n",
-            "message": "Function state mutability can be restricted to pure",
-            "severity": "warning",
-            "sourceLocation": {
-                "end": 1198,
-                "file": "/Users/abrilzucchi/metacloud/marketplace-contract/contracts/commons/EIP712Base.sol",
-                "start": 1043
-            },
-            "type": "Warning"
-        }
-    ],
     "sources": {
         "/Users/abrilzucchi/metacloud/marketplace-contract/contracts/commons/EIP712Base.sol": {
             "ast": {
@@ -712,8 +697,8 @@
                                                                                 "referencedDeclaration": 70,
                                                                                 "src": "993:10:0",
                                                                                 "typeDescriptions": {
-                                                                                    "typeIdentifier": "t_function_internal_view$__$returns$_t_uint256_$",
-                                                                                    "typeString": "function () view returns (uint256)"
+                                                                                    "typeIdentifier": "t_function_internal_pure$__$returns$_t_uint256_$",
+                                                                                    "typeString": "function () pure returns (uint256)"
                                                                                 }
                                                                             },
                                                                             "id": 51,
@@ -1112,7 +1097,7 @@
                                 },
                                 "scope": 89,
                                 "src": "1043:155:0",
-                                "stateMutability": "view",
+                                "stateMutability": "pure",
                                 "virtual": false,
                                 "visibility": "public"
                             },

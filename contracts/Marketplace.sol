@@ -4,11 +4,13 @@ pragma solidity ^0.7.3;
 
 import "@openzeppelin/contracts/utils/Address.sol";
 
-import "contracts/MarketplaceStorage.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "contracts/commons/Pausable.sol";
+import "./MarketplaceStorage.sol";
+import "../contracts/commons/Ownable.sol";
+import "../contracts/commons/Pausable.sol";
+import "../contracts/commons/ContextMixin.sol";
+import "../contracts/commons/NativeMetaTransaction.sol";
 
-contract Marketplace is Ownable, Pausable, MarketplaceStorage {
+contract Marketplace is Ownable, Pausable, MarketplaceStorage, NativeMetaTransaction {
   using Address for address;
 
   constructor (
@@ -25,7 +27,6 @@ contract Marketplace is Ownable, Pausable, MarketplaceStorage {
     acceptedToken = ERC20Interface(_acceptedToken);
   }
 
-  
   function createOrder(
     address nftAddress,
     uint256 assetId,
@@ -131,6 +132,7 @@ contract Marketplace is Ownable, Pausable, MarketplaceStorage {
       expiresAt
     );
   }
+
 
   function _cancelOrder(address nftAddress, uint256 assetId) internal returns (Order memory) {
     address sender = _msgSender();
