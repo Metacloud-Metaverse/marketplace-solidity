@@ -9,9 +9,11 @@ import "../contracts/commons/Ownable.sol";
 import "../contracts/commons/Pausable.sol";
 import "../contracts/commons/ContextMixin.sol";
 import "../contracts/commons/NativeMetaTransaction.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract Marketplace is Ownable, Pausable, MarketplaceStorage, NativeMetaTransaction {
   using Address for address;
+  using SafeMath for uint256;
 
   constructor (
     address _acceptedToken,
