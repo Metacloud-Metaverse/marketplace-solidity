@@ -11,5 +11,5 @@ npm i
 ### Test
 
 ```bash
-npm run test
+npx hardhat test
 ```
