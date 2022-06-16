@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.7.3;
+pragma solidity ^0.8.15;
 
 import "./MarketplaceStorage.sol";
-import "../contracts/commons/Ownable.sol";
-import "../contracts/commons/Pausable.sol";
-import "../contracts/commons/ContextMixin.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 
@@ -17,16 +16,9 @@ contract Marketplace is Ownable, Pausable, MarketplaceStorage {
         address _acceptedToken,
         address _landContract
     ) {
-        // EIP712 init
-        _initializeEIP712('Metacloud Marketplace', '1');
-
         // Verify that the land contract is a valid ERC721 contract
         require(_landContract.isContract(), 'The land contract address must be a deployed contract');
-        require(
-            _landContract.supportsInterface(ERC721_Interface),
-            'The NFT contract has an invalid ERC721 implementation'
-        );
-        landContract = _landContract;
+        landContract = IERC721(_landContract);
 
         // Verify that accepted token is a valid ERC20 token
         require(_acceptedToken.isContract(), 'The accepted token address must be a deployed contract');
@@ -82,9 +74,9 @@ contract Marketplace is Ownable, Pausable, MarketplaceStorage {
 
         emit OrderCreated(
             salesCounter - 1,
-            assetId,
+            _assetId,
             assetOwner,
-            priceInWei
+            _priceInWei
         );
     }
 
@@ -130,7 +122,7 @@ contract Marketplace is Ownable, Pausable, MarketplaceStorage {
         acceptedToken.transferFrom(buyer, seller, order.price);
 
         // Transfer asset to buyer (needs previous approval)
-        landContract.transferFrom(seller, buyer, assetId);
+        landContract.transferFrom(seller, buyer, order.assetId);
 
         emit OrderSuccessful(
             _orderId,
@@ -142,5 +134,4 @@ contract Marketplace is Ownable, Pausable, MarketplaceStorage {
 
         return order;
     }
-
 }
