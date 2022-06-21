@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 
+// TODO: overwrite ERC721 transferFrom function, checking first if there are
+// any open order for that Land. Revert saying that he have to cancel orders first.
 
 contract Marketplace is Ownable, Pausable, MarketplaceStorage {
     using Address for address;
@@ -28,6 +30,15 @@ contract Marketplace is Ownable, Pausable, MarketplaceStorage {
         salesCounter = 0;
     }
 
+    modifier orderExists(uint256 _id) {
+        require(_id <= salesCounter, 'The order does not exist');
+        _;
+    }
+
+    function getOrder(uint256 _id) public view orderExists(_id) returns (Order memory) {
+        return landSales[_id];
+    }
+
     function createOrder(uint256 assetId, uint256 priceInWei) public whenNotPaused {
         // Verify that the asset id does not have an open order
         require(
@@ -40,23 +51,23 @@ contract Marketplace is Ownable, Pausable, MarketplaceStorage {
         );
     }
 
-    function cancelOrder(uint256 _orderId) public whenNotPaused {
+    function cancelOrder(uint256 _orderId) public orderExists(_orderId) whenNotPaused {
         _cancelOrder(_orderId);
     }
 
-    function executeOrder(uint256 _orderId) public whenNotPaused {
+    function executeOrder(uint256 _orderId) public orderExists(_orderId) whenNotPaused {
         _executeOrder(_orderId);
     }
 
     function _createOrder(uint256 _assetId, uint256 _priceInWei) internal {
         address assetOwner = landContract.ownerOf(_assetId);
 
-        require(_msgSender() == assetOwner, 'Only the owner can create orders');
+        require(_msgSender() == assetOwner, 'Only Land owner can create orders');
         require(
             landContract.getApproved(_assetId) == address(this) || landContract.isApprovedForAll(assetOwner, address(this)),
-            'The contract is not authorized to manage the asset'
+            'Marketplace contract is not authorized to manage the asset'
         );
-        require(_priceInWei > 0, 'Price should be bigger than 0');
+        require(_priceInWei > 0, 'Order price must be greater than 0');
 
         // Create the order on mapping
         landSales[salesCounter] = Order({
@@ -87,6 +98,8 @@ contract Marketplace is Ownable, Pausable, MarketplaceStorage {
         require(assetIdToOrderOpen[order.assetId], 'The asset does not have an open order');
         // TODO: contract owner could cancel an order????
         require(order.seller == _msgSender() || _msgSender() == owner(), 'Unauthorized user');
+        // Verify that the seller still owns the Land
+        require(order.seller == landContract.ownerOf(order.assetId), 'The seller is no longer the owner');
 
         // Close the order related to asset ID
         delete assetIdToOrderOpen[order.assetId];
@@ -108,7 +121,7 @@ contract Marketplace is Ownable, Pausable, MarketplaceStorage {
 
         require(assetIdToOrderOpen[order.assetId], 'The asset does not have an open order');
         require(seller != buyer, 'Unauthorized user');
-        // TODO: waiting definition about gifting a land
+        // Verify that the seller still owns the Land
         require(seller == landContract.ownerOf(order.assetId), 'The seller is no longer the owner');
         // Verify that the buyer has enough tokens
         require(acceptedToken.balanceOf(buyer) >= order.price, 'The buyer does not have enough tokens');
@@ -133,5 +146,9 @@ contract Marketplace is Ownable, Pausable, MarketplaceStorage {
         );
 
         return order;
+    }
+
+    function pauseMarketplace() external onlyOwner {
+        _pause();
     }
 }

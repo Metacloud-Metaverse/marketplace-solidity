@@ -26,11 +26,10 @@ contract MarketplaceStorage {
     mapping (uint256 => Order) public landSales;
     // Mapping for avoid duplicated orders for the same NFT
     mapping (uint256 => bool) public assetIdToOrderOpen;
+    // Order counter
     uint256 public salesCounter;
 
-    bytes4 public constant ERC721_Interface = bytes4(0x80ac58cd);
-
-    // EVENTS
+    // Events
     event OrderCreated(
         uint256 id,
         uint256 indexed assetId,
