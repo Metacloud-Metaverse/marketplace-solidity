@@ -3,7 +3,7 @@ const { ethers } = require("hardhat");
 const { OrderStatus } = require("./utils/constants");
 const { initialSetup } = require("./utils/fixtures");
 
-const etherToWei = ether => ethers.utils.parseEther(ether);
+const CLOUDtoBigNumber = (value) => ethers.utils.parseUnits(value, 8);
 
 describe("Marketplace", () => {
     // Define variables for the contract instances
@@ -11,7 +11,7 @@ describe("Marketplace", () => {
     // Define variables for accounts to interact with contracts
     let deployer, user1, user2, user3;
 
-    const oneEther = etherToWei("1");
+    const tenClouds = CLOUDtoBigNumber("10");
 
     beforeEach(async () => {
         // Get contracts instances from fixture
@@ -20,29 +20,31 @@ describe("Marketplace", () => {
         [deployer, user1, user2, user3] = await ethers.getSigners();
     });
 
-    it("Should verify that deployer is the owner of marketplace", async () => {
-        expect(
-            await marketplace.owner()
-        ).to.equal(deployer.address);
-    });
-
-    it("Should revert trying to pause contract as non owner", async () => {
-        await expect(
-            marketplace.connect(user1).pauseMarketplace()
-        ).to.be.revertedWith("Ownable: caller is not the owner");
-    });
-
-    it("Should verify that user1 is the owner of Land ID 1", async () => {
-        expect(
-            await landContract.ownerOf(1)
-        ).to.equal(user1.address);
+    describe("Initial setup", () => {
+        it("Should verify that deployer is the owner of marketplace", async () => {
+            expect(
+                await marketplace.owner()
+            ).to.equal(deployer.address);
+        });
+    
+        it("Should revert trying to pause contract as non owner", async () => {
+            await expect(
+                marketplace.connect(user1).pauseMarketplace()
+            ).to.be.revertedWith("Ownable: caller is not the owner");
+        });
+    
+        it("Should verify that user1 is the owner of Land ID 1", async () => {
+            expect(
+                await landContract.ownerOf(1)
+            ).to.equal(user1.address);
+        });
     });
 
     describe("Creating orders", () => {
         it("Should revert trying to create order for Land ID 1 as non owner", async () => {
             // Create order
             await expect(
-                marketplace.connect(user2).createOrder(1, oneEther)
+                marketplace.connect(user2).createOrder(1, tenClouds)
             ).to.be.revertedWith("Only Land owner can create orders");
         });
 
@@ -58,7 +60,7 @@ describe("Marketplace", () => {
         it("Should revert trying to create order for Land ID 1 without approve contract", async () => {
             // Create order
             await expect(
-                marketplace.connect(user1).createOrder(1, oneEther)
+                marketplace.connect(user1).createOrder(1, tenClouds)
             ).to.be.revertedWith("Marketplace contract is not authorized to manage the asset");
         });
 
@@ -67,20 +69,20 @@ describe("Marketplace", () => {
             await landContract.connect(user1).approve(marketplace.address, 1);
             // Create order to sell Land ID 1
             expect(
-                await marketplace.connect(user1).createOrder(1, oneEther)
+                await marketplace.connect(user1).createOrder(1, tenClouds)
             ).to.emit(
                 marketplace, "OrderCreated"
             ).withArgs(
                 0,
                 1,
                 user1.address,
-                oneEther
+                tenClouds
             );
             // Verify that order is created correctly
             const orderZero = await marketplace.getOrder(0);
             expect(orderZero.assetId).to.equal(1);
             expect(orderZero.seller).to.equal(user1.address);
-            expect(orderZero.price).to.equal(oneEther);
+            expect(orderZero.price).to.equal(tenClouds);
             expect(orderZero.status).to.equal(OrderStatus.Open);
         });
 
@@ -88,10 +90,10 @@ describe("Marketplace", () => {
             // Approve marketplace contract to manage Land ID 1
             await landContract.connect(user1).approve(marketplace.address, 1);
             // Create order to sell Land ID 1
-            await marketplace.connect(user1).createOrder(1, oneEther);
+            await marketplace.connect(user1).createOrder(1, tenClouds);
             // Create order to sell Land ID 1 again
             await expect(
-                marketplace.connect(user1).createOrder(1, oneEther)
+                marketplace.connect(user1).createOrder(1, tenClouds)
             ).to.be.revertedWith("The asset already have an open order");
         });
     });
@@ -108,7 +110,7 @@ describe("Marketplace", () => {
             // Approve marketplace contract to manage Land ID 1
             await landContract.connect(user1).approve(marketplace.address, 1);
             // Create order to sell Land ID 1
-            await marketplace.connect(user1).createOrder(1, oneEther);
+            await marketplace.connect(user1).createOrder(1, tenClouds);
             // Try to buy that land
             await expect(
                 marketplace.connect(user1).executeOrder(0)
@@ -122,7 +124,7 @@ describe("Marketplace", () => {
             // Approve marketplace contract to manage Land ID 1
             await landContract.connect(user1).approve(marketplace.address, 1);
             // Create order to sell Land ID 1
-            await marketplace.connect(user1).createOrder(1, oneEther);
+            await marketplace.connect(user1).createOrder(1, tenClouds);
             // Try to buy that land
             await expect(
                 marketplace.connect(user2).executeOrder(0)
@@ -135,9 +137,9 @@ describe("Marketplace", () => {
         it("Should revert trying to buy Land ID 1 with insufficient funds", async() => {
             // Approve marketplace contract to manage Land ID 1 & tokens
             await landContract.connect(user1).approve(marketplace.address, 1);
-            await tokenContract.connect(user3).approve(marketplace.address, oneEther);
+            await tokenContract.connect(user3).approve(marketplace.address, tenClouds);
             // Create order to sell Land ID 1
-            await marketplace.connect(user1).createOrder(1, oneEther);
+            await marketplace.connect(user1).createOrder(1, tenClouds);
             // Try to buy that land
             await expect(
                 marketplace.connect(user3).executeOrder(0)
@@ -150,9 +152,8 @@ describe("Marketplace", () => {
         it("Should revert trying to buy Land ID 1 without being the owner anymore", async () => {
             // Approve marketplace contract to manage Land ID 1 & tokens
             await landContract.connect(user1).approve(marketplace.address, 1);
-            await tokenContract.connect(user3).approve(marketplace.address, oneEther);
             // Create order to sell Land ID 1
-            await marketplace.connect(user1).createOrder(1, oneEther);
+            await marketplace.connect(user1).createOrder(1, tenClouds);
             // Transfer Land ID 1 to user2
             await landContract.connect(user1).transferFrom(user1.address, user2.address, 1);
             // Try to buy that land
@@ -164,13 +165,13 @@ describe("Marketplace", () => {
         it("Should buy Land ID 1 successfully", async () => {
             // Approve marketplace contract to manage Land ID 1 & tokens
             await landContract.connect(user1).approve(marketplace.address, 1); 
-            await tokenContract.connect(user2).approve(marketplace.address, ethers.utils.parseEther("10"));
+            await tokenContract.connect(user2).approve(marketplace.address, ethers.constants.MaxUint256);
             // Get token balances before buying
             const tokenBalanceUser1 = await tokenContract.balanceOf(user1.address);
             const tokenBalanceUser2 = await tokenContract.balanceOf(user2.address);
             const user2EtherBalance = await user2.getBalance();
             // Create order to sell Land ID 1
-            await marketplace.connect(user1).createOrder(1, etherToWei("1"));
+            await marketplace.connect(user1).createOrder(1, tenClouds);
             // Buy Land ID 1 (order ID is 0)
             const buyTx = await marketplace.connect(user2).executeOrder(0);
             expect(
@@ -181,7 +182,7 @@ describe("Marketplace", () => {
                 0,
                 1,
                 user1.address,
-                oneEther,
+                tenClouds,
                 user2.address
             );
             // Verify that order status is Executed
@@ -195,12 +196,12 @@ describe("Marketplace", () => {
             expect(
                 await tokenContract.balanceOf(user1.address)
             ).to.equal(
-                tokenBalanceUser1.add(oneEther)
+                tokenBalanceUser1.add(tenClouds)
             );
             expect(
                 await tokenContract.balanceOf(user2.address)
             ).to.equal(
-                tokenBalanceUser2.sub(oneEther)
+                tokenBalanceUser2.sub(tenClouds)
             );
             // Verify gas consumed (in native coins)
             const waitedTx = await buyTx.wait();
@@ -216,7 +217,7 @@ describe("Marketplace", () => {
             // Approve marketplace contract to manage Land ID 1
             await landContract.connect(user1).approve(marketplace.address, 1);
             // Create order to sell Land ID 1
-            await marketplace.connect(user1).createOrder(1, oneEther);
+            await marketplace.connect(user1).createOrder(1, tenClouds);
             // Try to cancel that order
             await expect(
                 marketplace.connect(user2).cancelOrder(0)
@@ -237,9 +238,9 @@ describe("Marketplace", () => {
             // Approve marketplace contract to manage Land ID 1
             await landContract.connect(user1).approve(marketplace.address, 1);
             // Create order to sell Land ID 1
-            await marketplace.connect(user1).createOrder(1, oneEther);
+            await marketplace.connect(user1).createOrder(1, tenClouds);
             // Buy Land ID 1 (order ID is 0)
-            await tokenContract.connect(user2).approve(marketplace.address, oneEther);
+            await tokenContract.connect(user2).approve(marketplace.address, tenClouds);
             await marketplace.connect(user2).executeOrder(0);
             // Try to cancel that order
             await expect(
@@ -254,7 +255,7 @@ describe("Marketplace", () => {
             // Approve marketplace contract to manage Land ID 1
             await landContract.connect(user1).approve(marketplace.address, 1);
             // Create order to sell Land ID 1
-            await marketplace.connect(user1).createOrder(1, oneEther);
+            await marketplace.connect(user1).createOrder(1, tenClouds);
             // Transfer Land ID 1 to user2
             await landContract.connect(user1).transferFrom(user1.address, user2.address, 1);
             // Try to cancel that order
@@ -267,7 +268,7 @@ describe("Marketplace", () => {
             // Approve marketplace contract to manage Land ID 1
             await landContract.connect(user1).approve(marketplace.address, 1);
             // Create order to sell Land ID 1
-            await marketplace.connect(user1).createOrder(1, oneEther);
+            await marketplace.connect(user1).createOrder(1, tenClouds);
             // Cancel order ID 0
             expect(
                 await marketplace.connect(user1).cancelOrder(0)

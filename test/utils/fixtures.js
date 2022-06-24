@@ -15,7 +15,7 @@ const initialSetup = deployments.createFixture(
         // Mint some Lands and tokens (they need approval)
         await landContract.mintTo(user1.address, 1);
         await landContract.mintTo(user1.address, 2);
-        await tokenContract.mintTo(user2.address, ethers.utils.parseEther("10"));
+        await tokenContract.mintTo(user2.address, ethers.utils.parseUnits("10", 8));
         return { contracts: { marketplace, tokenContract, landContract }};
     }
 );
