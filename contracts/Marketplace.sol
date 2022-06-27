@@ -35,6 +35,22 @@ contract Marketplace is Ownable, Pausable, MarketplaceStorage {
         _;
     }
 
+    function setFeeReceiver(address _feeReceiver) public {
+        // Verify that the fee receiver is not null address
+        require(_feeReceiver != address(0), 'The fee receiver address cannot be null');
+        address oldFeeReceiver = feeReceiver;
+        feeReceiver = _feeReceiver;
+        emit FeeReceiverChanged(oldFeeReceiver, _feeReceiver);
+    }
+
+    function setFeePerThousand(uint256 _newFee) public {
+        // Verify that the new fee is between 0 and 999
+        require(_newFee > 0 && _newFee < 1000, 'The fee must be between 0 and 999');
+        uint256 oldFee = feePerThousand;
+        feePerThousand = _newFee;
+        emit FeeChanged(oldFee, _newFee);
+    }
+
     function getOrder(uint256 _id) public view orderExists(_id) returns (Order memory) {
         return landSales[_id];
     }
@@ -132,7 +148,24 @@ contract Marketplace is Ownable, Pausable, MarketplaceStorage {
         landSales[_orderId].status = Status.Executed;
 
         // Transfer tokens to seller (needs previous approval)
-        acceptedToken.transferFrom(buyer, seller, order.price);
+        if (feeReceiver != address(0)) {
+            // Calculate fee and transfer to fee receiver
+            uint256 fee = _calculateFee(order.price, feePerThousand);
+            require(
+                acceptedToken.transferFrom(buyer, feeReceiver, fee),
+                "Marketplace: Failed transferring fee to receiver"
+            );
+            require(
+                acceptedToken.transferFrom(buyer, seller, order.price.sub(fee)),
+                "Marketplace: Failed transferring tokens to seller"
+            );
+        } else {
+            // Transfer tokens without fees
+            require(
+                acceptedToken.transferFrom(buyer, seller, order.price),
+                "Marketplace: Failed transferring tokens to seller"
+            );
+        }
 
         // Transfer asset to buyer (needs previous approval)
         landContract.transferFrom(seller, buyer, order.assetId);
@@ -148,7 +181,16 @@ contract Marketplace is Ownable, Pausable, MarketplaceStorage {
         return order;
     }
 
-    function pauseMarketplace() external onlyOwner {
-        _pause();
+    function _calculateFee(uint256 _price, uint256 _fee) pure private returns (uint256) {
+        return _price.mul(_fee).div(1000);
+    }
+
+    function togglePauseMarketplace() external onlyOwner {
+        // If paused, unpause, otherwise pause
+        if (paused()) {
+            _unpause();
+        } else {
+            _pause();
+        }
     }
 }

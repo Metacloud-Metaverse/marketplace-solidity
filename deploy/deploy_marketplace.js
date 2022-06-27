@@ -23,8 +23,8 @@ module.exports = async ({ getNamedAccounts, deployments, network }) => {
         landContractAddress = TestERC721.address;
     } else {
         // TODO: fill with real addresses
-        tokenContractAddress = "0x0000000000000000000000000000000000000000";
-        landContractAddress = "0x0000000000000000000000000000000000000000";
+        tokenContractAddress = "0x3Cf48E33fCD33A08171b6d01263B6dAD28FBBD27";
+        landContractAddress = "0x0D4e47AC9F748bf65a57316f63e71F6dEC83a3B4";
     }
 
     // Deploy Marketplace contract

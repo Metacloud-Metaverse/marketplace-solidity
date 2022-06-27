@@ -8,6 +8,8 @@ import "./commons/IERC721.sol";
 contract MarketplaceStorage {
     IERC20 public acceptedToken;
     IERC721 public landContract;
+    address public feeReceiver;
+    uint256 public feePerThousand = 25; // 25 is 2,5 since 25/1000 = 0,025
 
     enum Status {
         Open,
@@ -47,5 +49,13 @@ contract MarketplaceStorage {
         uint256 id,
         uint256 indexed assetId,
         address indexed seller
+    );
+    event FeeChanged(
+        uint256 previousFee,
+        uint256 newFee
+    );
+    event FeeReceiverChanged(
+        address previousFeeReceiver,
+        address newFeeReceiver
     );
 }

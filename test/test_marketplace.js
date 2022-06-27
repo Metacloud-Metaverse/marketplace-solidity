@@ -29,14 +29,68 @@ describe("Marketplace", () => {
     
         it("Should revert trying to pause contract as non owner", async () => {
             await expect(
-                marketplace.connect(user1).pauseMarketplace()
+                marketplace.connect(user1).togglePauseMarketplace()
             ).to.be.revertedWith("Ownable: caller is not the owner");
         });
+
+        it("Should pause contract successfully", async () => {
+            // Pause marketplace
+            await marketplace.togglePauseMarketplace();
+            // Verify that marketplace is paused
+            expect(
+                await marketplace.paused()
+            ).to.be.true;
+            // Revert trying to create an order while paused
+            await expect(
+                marketplace.createOrder(0, tenClouds)
+            ).to.be.revertedWith("Pausable: paused");
+        });
     
+        it("Should unpause contract successfully", async () => {
+            // Pause marketplace
+            await marketplace.togglePauseMarketplace();
+            // Unpause marketplace
+            await marketplace.togglePauseMarketplace();
+            expect(
+                await marketplace.paused()
+            ).to.be.false;
+        });
+
         it("Should verify that user1 is the owner of Land ID 1", async () => {
             expect(
                 await landContract.ownerOf(1)
             ).to.equal(user1.address);
+        });
+
+        it("Should change fee per thousand successfully", async () => {
+            // Change fee per thousand
+            expect(
+                await marketplace.setFeePerThousand(100)
+            ).to.emit(
+                marketplace, "FeeChanged"
+            ).withArgs(25, 100);
+            // Verify that fee per thousand is changed to 100
+            expect(
+                await marketplace.feePerThousand()
+            ).to.equal(100);
+        });
+
+        it("Should revert trying to set fee higher than 999", async () => {
+            await expect(
+                marketplace.setFeePerThousand(1000)
+            ).to.be.revertedWith("The fee must be between 0 and 999");
+            // Verify that feePerThousand is still 25
+            expect(
+                await marketplace.feePerThousand()
+            ).to.equal(25);
+        });
+
+        it("Should change fee receiver successfully", async () => {
+            expect(
+                await marketplace.setFeeReceiver(user3.address)
+            ).to.emit(
+                marketplace, "FeeReceiverChanged"
+            ).withArgs(0, user3.address);
         });
     });
 
@@ -162,7 +216,7 @@ describe("Marketplace", () => {
             ).to.be.revertedWith("The seller is no longer the owner");
         });
     
-        it("Should buy Land ID 1 successfully", async () => {
+        it("Should buy Land ID 1 successfully without fee", async () => {
             // Approve marketplace contract to manage Land ID 1 & tokens
             await landContract.connect(user1).approve(marketplace.address, 1); 
             await tokenContract.connect(user2).approve(marketplace.address, ethers.constants.MaxUint256);
@@ -209,6 +263,42 @@ describe("Marketplace", () => {
             expect(
                 await user2.getBalance()
             ).to.equal(user2EtherBalance.sub(gasUsed));
+        });
+
+        it("Should buy Land ID 1 successfully with fee", async () => {
+            // Approve marketplace contract to manage Land ID 1 & tokens
+            await landContract.connect(user1).approve(marketplace.address, 1); 
+            await tokenContract.connect(user2).approve(marketplace.address, ethers.constants.MaxUint256);
+            // Set feeReceiver
+            await marketplace.setFeeReceiver(user3.address);
+            // Get token balances before buying
+            const tokenBalanceUser1 = await tokenContract.balanceOf(user1.address);
+            const tokenBalanceUser2 = await tokenContract.balanceOf(user2.address);
+            const tokenBalanceUser3 = await tokenContract.balanceOf(user3.address);
+            const user2EtherBalance = await user2.getBalance();
+            // Create order to sell Land ID 1
+            await marketplace.connect(user1).createOrder(1, tenClouds);
+            // Buy Land ID 1 (order ID is 0)
+            await marketplace.connect(user2).executeOrder(0);
+            // Calculate fee
+            const fee = tenClouds.mul(await marketplace.feePerThousand()).div(1000);
+            // Verify token balance on all users
+            expect(
+                await tokenContract.balanceOf(user1.address)
+            ).to.equal(
+                tokenBalanceUser1.add(tenClouds).sub(fee)
+            );
+            expect(
+                await tokenContract.balanceOf(user2.address)
+            ).to.equal(
+                tokenBalanceUser2.sub(tenClouds)
+            );
+            // Verify feeReceiver balance
+            expect(
+                await tokenContract.balanceOf(user3.address)
+            ).to.equal(
+                tokenBalanceUser3.add(fee)
+            );
         });
     });
 
