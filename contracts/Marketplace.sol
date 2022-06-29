@@ -1,233 +1,196 @@
 // SPDX-License-Identifier: MIT
-
-pragma solidity ^0.7.3;
-
-import "@openzeppelin/contracts/utils/Address.sol";
+pragma solidity ^0.8.15;
 
 import "./MarketplaceStorage.sol";
-import "../contracts/commons/Ownable.sol";
-import "../contracts/commons/Pausable.sol";
-import "../contracts/commons/ContextMixin.sol";
-import "../contracts/commons/NativeMetaTransaction.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 
-contract Marketplace is Ownable, Pausable, MarketplaceStorage, NativeMetaTransaction {
-  using Address for address;
-  using SafeMath for uint256;
+// TODO: overwrite ERC721 transferFrom function, checking first if there are
+// any open order for that Land. Revert saying that he have to cancel orders first.
 
-  constructor (
-    address _acceptedToken,
-    address _owner
-  )  {
-    // EIP712 init
-    _initializeEIP712('Metacloud Marketplace', '1');
+contract Marketplace is Ownable, Pausable, MarketplaceStorage {
+    using Address for address;
+    using SafeMath for uint256;
 
-    require(_owner != address(0), 'Invalid owner');
-    transferOwnership(_owner);
+    constructor (
+        address _acceptedToken,
+        address _landContract
+    ) {
+        // Verify that the land contract is a valid ERC721 contract
+        require(_landContract.isContract(), 'The land contract address must be a deployed contract');
+        landContract = IERC721(_landContract);
 
-    require(_acceptedToken.isContract(), 'The accepted token address must be a deployed contract');
-    acceptedToken = ERC20Interface(_acceptedToken);
-  }
+        // Verify that accepted token is a valid ERC20 token
+        require(_acceptedToken.isContract(), 'The accepted token address must be a deployed contract');
+        acceptedToken = IERC20(_acceptedToken);
 
-  function createOrder(
-    address nftAddress,
-    uint256 assetId,
-    uint256 priceInWei,
-    uint256 expiresAt
-  )
-    public
-    whenNotPaused
-  {
-    _createOrder(
-      nftAddress,
-      assetId,
-      priceInWei,
-      expiresAt
-    );
-  }
-
-  function cancelOrder(address nftAddress, uint256 assetId) public whenNotPaused {
-    _cancelOrder(nftAddress, assetId);
-  }
-
-  function safeExecuteOrder(
-    address nftAddress,
-    uint256 assetId,
-    uint256 price,
-    bytes memory fingerprint
-  )
-   public
-   whenNotPaused
-  {
-    _executeOrder(
-      nftAddress,
-      assetId,
-      price,
-      fingerprint
-    );
-  }
-
-  function executeOrder(
-    address nftAddress,
-    uint256 assetId,
-    uint256 price
-  )
-   public
-   whenNotPaused
-  {
-    _executeOrder(
-      nftAddress,
-      assetId,
-      price,
-      ''
-    );
-  }
-
-  function _createOrder(
-    address nftAddress,
-    uint256 assetId,
-    uint256 priceInWei,
-    uint256 expiresAt
-  )
-    internal
-  {
-    _requireERC721(nftAddress);
-
-    address sender = _msgSender();
-
-    ERC721Interface nftRegistry = ERC721Interface(nftAddress);
-    address assetOwner = nftRegistry.ownerOf(assetId);
-
-    require(sender == assetOwner, 'Only the owner can create orders');
-    require(
-      nftRegistry.getApproved(assetId) == address(this) || nftRegistry.isApprovedForAll(assetOwner, address(this)),
-      'The contract is not authorized to manage the asset'
-    );
-    require(priceInWei > 0, 'Price should be bigger than 0');
-    require(expiresAt > block.timestamp.add(1 minutes), 'Publication should be more than 1 minute in the future');
-
-    bytes32 orderId = keccak256(
-      abi.encodePacked(
-        block.timestamp,
-        assetOwner,
-        assetId,
-        nftAddress,
-        priceInWei
-      )
-    );
-
-    orderByAssetId[nftAddress][assetId] = Order({
-      id: orderId,
-      seller: assetOwner,
-      nftAddress: nftAddress,
-      price: priceInWei,
-      expiresAt: expiresAt
-    });
-
-
-    emit OrderCreated(
-      orderId,
-      assetId,
-      assetOwner,
-      nftAddress,
-      priceInWei,
-      expiresAt
-    );
-  }
-
-
-  function _cancelOrder(address nftAddress, uint256 assetId) internal returns (Order memory) {
-    address sender = _msgSender();
-    Order memory order = orderByAssetId[nftAddress][assetId];
-
-    require(order.id != 0, 'Asset not published');
-    require(order.seller == sender || sender == owner(), 'Unauthorized user');
-
-    bytes32 orderId = order.id;
-    address orderSeller = order.seller;
-    address orderNftAddress = order.nftAddress;
-    delete orderByAssetId[nftAddress][assetId];
-
-    emit OrderCancelled(
-      orderId,
-      assetId,
-      orderSeller,
-      orderNftAddress
-    );
-
-    return order;
-  }
-
-  function _executeOrder(
-    address nftAddress,
-    uint256 assetId,
-    uint256 price,
-    bytes memory fingerprint
-  )
-   internal returns (Order memory)
-  {
-    _requireERC721(nftAddress);
-
-    address sender = _msgSender();
-
-    ERC721Verifiable nftRegistry = ERC721Verifiable(nftAddress);
-
-    if (nftRegistry.supportsInterface(InterfaceId_ValidateFingerprint)) {
-      require(
-        nftRegistry.verifyFingerprint(assetId, fingerprint),
-        'The asset fingerprint is not valid'
-      );
+        // Initialize the sales counter
+        salesCounter = 0;
     }
-    Order memory order = orderByAssetId[nftAddress][assetId];
 
-    require(order.id != 0, 'Asset not published');
+    modifier orderExists(uint256 _id) {
+        require(_id <= salesCounter, 'The order does not exist');
+        _;
+    }
 
-    address seller = order.seller;
+    function setFeeReceiver(address _feeReceiver) public {
+        // Verify that the fee receiver is not null address
+        require(_feeReceiver != address(0), 'The fee receiver address cannot be null');
+        address oldFeeReceiver = feeReceiver;
+        feeReceiver = _feeReceiver;
+        emit FeeReceiverChanged(oldFeeReceiver, _feeReceiver);
+    }
 
-    require(seller != address(0), 'Invalid address');
-    require(seller != sender, 'Unauthorized user');
-    require(order.price == price, 'The price is not correct');
-    require(block.timestamp < order.expiresAt, 'The order expired');
-    require(seller == nftRegistry.ownerOf(assetId), 'The seller is no longer the owner');
+    function setFeePerThousand(uint256 _newFee) public {
+        // Verify that the new fee is between 0 and 999
+        require(_newFee > 0 && _newFee < 1000, 'The fee must be between 0 and 999');
+        uint256 oldFee = feePerThousand;
+        feePerThousand = _newFee;
+        emit FeeChanged(oldFee, _newFee);
+    }
 
-    uint saleShareAmount = 0;
+    function getOrder(uint256 _id) public view orderExists(_id) returns (Order memory) {
+        return landSales[_id];
+    }
 
-    bytes32 orderId = order.id;
-    delete orderByAssetId[nftAddress][assetId];
+    function createOrder(uint256 assetId, uint256 priceInWei) public whenNotPaused {
+        // Verify that the asset id does not have an open order
+        require(
+            !assetIdToOrderOpen[assetId],
+            'The asset already have an open order'
+        );
+        _createOrder(
+            assetId,
+            priceInWei
+        );
+    }
 
-      // Transfer share amount for marketplace Owner
-      require(
-        acceptedToken.transferFrom(sender, owner(), saleShareAmount),
-        'Transfering the cut to the Marketplace owner failed'
-      );
-    
+    function cancelOrder(uint256 _orderId) public orderExists(_orderId) whenNotPaused {
+        _cancelOrder(_orderId);
+    }
 
-    // Transfer asset owner
-      nftRegistry.safeTransferFrom(
-      seller,
-      sender,
-      assetId
-    );
+    function executeOrder(uint256 _orderId) public orderExists(_orderId) whenNotPaused {
+        _executeOrder(_orderId);
+    }
 
-    emit OrderSuccessful(
-      orderId,
-      assetId,
-      seller,
-      nftAddress,
-      price,
-      sender
-    );
+    function _createOrder(uint256 _assetId, uint256 _priceInWei) internal {
+        address assetOwner = landContract.ownerOf(_assetId);
 
-    return order;
-  }
+        require(_msgSender() == assetOwner, 'Only Land owner can create orders');
+        require(
+            landContract.getApproved(_assetId) == address(this) || landContract.isApprovedForAll(assetOwner, address(this)),
+            'Marketplace contract is not authorized to manage the asset'
+        );
+        require(_priceInWei > 0, 'Order price must be greater than 0');
 
-  function _requireERC721(address nftAddress) internal view {
-    require(nftAddress.isContract(), 'The NFT Address should be a contract');
+        // Create the order on mapping
+        landSales[salesCounter] = Order({
+            assetId: _assetId,
+            seller: assetOwner,
+            price: _priceInWei,
+            status: Status.Open
+        });
 
-    ERC721Interface nftRegistry = ERC721Interface(nftAddress);
-    require(
-      nftRegistry.supportsInterface(ERC721_Interface),
-      'The NFT contract has an invalid ERC721 implementation'
-    );
-  }
+        // Open the order related to asset ID (to avoid duplicates)
+        assetIdToOrderOpen[_assetId] = true;
+
+        // Increment the sales counter
+        salesCounter += 1;
+
+        emit OrderCreated(
+            salesCounter - 1,
+            _assetId,
+            assetOwner,
+            _priceInWei
+        );
+    }
+
+    function _cancelOrder(uint256 _orderId) internal {
+        // Get the order by id
+        Order memory order = landSales[_orderId];
+
+        require(assetIdToOrderOpen[order.assetId], 'The asset does not have an open order');
+        // TODO: contract owner could cancel an order????
+        require(order.seller == _msgSender() || _msgSender() == owner(), 'Unauthorized user');
+        // Verify that the seller still owns the Land
+        require(order.seller == landContract.ownerOf(order.assetId), 'The seller is no longer the owner');
+
+        // Close the order related to asset ID
+        delete assetIdToOrderOpen[order.assetId];
+        // Change order status to Cancelled
+        landSales[_orderId].status = Status.Cancelled;
+
+        emit OrderCancelled(
+            _orderId,
+            order.assetId,
+            order.seller // TODO: in case the order is cancelled by contract owner, change this
+        );
+    }
+
+    function _executeOrder(uint256 _orderId) internal returns (Order memory) {
+        address buyer = _msgSender();
+        // Get the order by id
+        Order memory order = landSales[_orderId];
+        address seller = order.seller;
+
+        require(assetIdToOrderOpen[order.assetId], 'The asset does not have an open order');
+        require(seller != buyer, 'Unauthorized user');
+        // Verify that the seller still owns the Land
+        require(seller == landContract.ownerOf(order.assetId), 'The seller is no longer the owner');
+        // Verify that the buyer has enough tokens
+        require(acceptedToken.balanceOf(buyer) >= order.price, 'The buyer does not have enough tokens');
+
+        // Close the order related to asset ID
+        delete assetIdToOrderOpen[order.assetId];
+        // Change order status to Executed
+        landSales[_orderId].status = Status.Executed;
+
+        // Transfer tokens to seller (needs previous approval)
+        if (feeReceiver != address(0)) {
+            // Calculate fee and transfer to fee receiver
+            uint256 fee = _calculateFee(order.price, feePerThousand);
+            require(
+                acceptedToken.transferFrom(buyer, feeReceiver, fee),
+                "Marketplace: Failed transferring fee to receiver"
+            );
+            require(
+                acceptedToken.transferFrom(buyer, seller, order.price.sub(fee)),
+                "Marketplace: Failed transferring tokens to seller"
+            );
+        } else {
+            // Transfer tokens without fees
+            require(
+                acceptedToken.transferFrom(buyer, seller, order.price),
+                "Marketplace: Failed transferring tokens to seller"
+            );
+        }
+
+        // Transfer asset to buyer (needs previous approval)
+        landContract.transferFrom(seller, buyer, order.assetId);
+
+        emit OrderSuccessful(
+            _orderId,
+            order.assetId,
+            seller,
+            order.price,
+            buyer
+        );
+
+        return order;
+    }
+
+    function _calculateFee(uint256 _price, uint256 _fee) pure private returns (uint256) {
+        return _price.mul(_fee).div(1000);
+    }
+
+    function togglePauseMarketplace() external onlyOwner {
+        // If paused, unpause, otherwise pause
+        if (paused()) {
+            _unpause();
+        } else {
+            _pause();
+        }
+    }
 }

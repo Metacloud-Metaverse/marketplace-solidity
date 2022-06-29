@@ -1,73 +1,61 @@
 // SPDX-License-Identifier: MIT
+pragma solidity ^0.8.15;
 
-pragma solidity ^0.7.3;
-
-
-interface ERC20Interface {
-  function transferFrom(address from, address to, uint tokens) external returns (bool success);
-}
-
-interface ERC721Interface {
-  function ownerOf(uint256 _tokenId) external view returns (address _owner);
-  function approve(address _to, uint256 _tokenId) external;
-  function getApproved(uint256 _tokenId) external view returns (address);
-  function isApprovedForAll(address _owner, address _operator) external view returns (bool);
-  function safeTransferFrom(address _from, address _to, uint256 _tokenId) external;
-  function supportsInterface(bytes4) external view returns (bool);
-}
-
-
-interface ERC721Verifiable is ERC721Interface {
-  function verifyFingerprint(uint256, bytes memory) external view returns (bool);
-}
+import "./commons/IERC20.sol";
+import "./commons/IERC721.sol";
 
 
 contract MarketplaceStorage {
-  ERC20Interface public acceptedToken;
+    IERC20 public acceptedToken;
+    IERC721 public landContract;
+    address public feeReceiver;
+    uint256 public feePerThousand = 25; // 25 is 2,5 since 25/1000 = 0,025
 
-  struct Order {
-    // Order ID
-    bytes32 id;
-    // Owner of the NFT
-    address seller;
-    // NFT registry address
-    address nftAddress;
-    // Price (in wei) for the published item
-    uint256 price;
-    // Time when this sale ends
-    uint256 expiresAt;
-  }
+    enum Status {
+        Open,
+        Executed,
+        Cancelled
+    }
 
-  // From ERC721 registry assetId to Order (to avoid asset collision)
-  mapping (address => mapping(uint256 => Order)) public orderByAssetId;
+    struct Order {
+        uint256 assetId; // Asset ID
+        address seller; // Owner of the NFT
+        uint256 price; // Price (in wei) for the land
+        Status status; // Status of the order
+    }
 
-  bytes4 public constant InterfaceId_ValidateFingerprint = bytes4(
-    keccak256("verifyFingerprint(uint256,bytes)")
-  );
+    // Sales manager
+    mapping (uint256 => Order) public landSales;
+    // Mapping for avoid duplicated orders for the same NFT
+    mapping (uint256 => bool) public assetIdToOrderOpen;
+    // Order counter
+    uint256 public salesCounter;
 
-  bytes4 public constant ERC721_Interface = bytes4(0x80ac58cd);
-
-  // EVENTS
-  event OrderCreated(
-    bytes32 id,
-    uint256 indexed assetId,
-    address indexed seller,
-    address nftAddress,
-    uint256 priceInWei,
-    uint256 expiresAt
-  );
-  event OrderSuccessful(
-    bytes32 id,
-    uint256 indexed assetId,
-    address indexed seller,
-    address nftAddress,
-    uint256 totalPrice,
-    address indexed buyer
-  );
-  event OrderCancelled(
-    bytes32 id,
-    uint256 indexed assetId,
-    address indexed seller,
-    address nftAddress
-  );
+    // Events
+    event OrderCreated(
+        uint256 id,
+        uint256 indexed assetId,
+        address indexed seller,
+        uint256 priceInWei
+    );
+    event OrderSuccessful(
+        uint256 id,
+        uint256 indexed assetId,
+        address indexed seller,
+        uint256 priceInWei,
+        address indexed buyer
+    );
+    event OrderCancelled(
+        uint256 id,
+        uint256 indexed assetId,
+        address indexed seller
+    );
+    event FeeChanged(
+        uint256 previousFee,
+        uint256 newFee
+    );
+    event FeeReceiverChanged(
+        address previousFeeReceiver,
+        address newFeeReceiver
+    );
 }
